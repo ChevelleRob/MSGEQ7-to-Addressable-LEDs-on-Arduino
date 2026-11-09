@@ -7,7 +7,8 @@
  * scrolls by one pixel and a new pixel is fed in whose color/brightness comes
  * from the music, so beats travel down the strip.
  *
- * Three pushbuttons (each wired from the pin to GND, no resistor needed):
+ * Three optional pushbuttons (each wired from the pin to GND, no resistor needed).
+ * Set USE_BUTTONS to false to run without buttons; the DEFAULT_ settings are then used.
  *   PATTERN button -> cycles the scroll pattern
  *   COLOR   button -> cycles the color scheme
  *   SPEED   button -> cycles the scroll speed
@@ -65,6 +66,7 @@
 #define MSGEQ7_OUT_PIN     A0     // MSGEQ7 pin 3 (OUT)
 
 // ---------- Pushbuttons (pin -> button -> GND, internal pull-ups are used) ----------
+#define USE_BUTTONS        true   // false = no buttons; pattern/color/speed come from the DEFAULT_ settings below
 #define BUTTON_PATTERN_PIN 2
 #define BUTTON_COLOR_PIN   3
 #define BUTTON_SPEED_PIN   4
@@ -75,11 +77,13 @@
 // Smaller = faster. With 150 WS2812B LEDs the fastest real rate is ~6 ms/step.
 const uint16_t SCROLL_SPEEDS_MS[] = { 6, 12, 20, 30, 45, 70, 100 };
 
-// ---------- Starting settings (used on first power-up / if saving is off) ----------
+// ---------- Starting settings ----------
+// With USE_BUTTONS false these ARE the settings: change them and re-upload.
+// With USE_BUTTONS true they're used on first power-up (or always, if SAVE_SETTINGS is false).
 #define DEFAULT_PATTERN    0
 #define DEFAULT_COLOR      0
 #define DEFAULT_SPEED      2      // index into SCROLL_SPEEDS_MS
-#define SAVE_SETTINGS      true   // Remember pattern/color/speed in EEPROM across power cycles
+#define SAVE_SETTINGS      true   // Remember button choices in EEPROM across power cycles (ignored if USE_BUTTONS is false)
 
 // ---------- Custom colors (used by color schemes 8 and 9) ----------
 const CRGB CUSTOM_COLOR_1 = CRGB::Red;
@@ -185,7 +189,7 @@ bool buttonPressed(Button &b) {
 // Settings storage
 // ---------------------------------------------------------------------
 void loadSettings() {
-  if (!SAVE_SETTINGS || EEPROM.read(0) != EEPROM_MAGIC) return;
+  if (!USE_BUTTONS || !SAVE_SETTINGS || EEPROM.read(0) != EEPROM_MAGIC) return;
   uint8_t p = EEPROM.read(1), c = EEPROM.read(2), s = EEPROM.read(3);
   if (p < NUM_PATTERNS)      patternIndex = p;
   if (c < NUM_COLOR_SCHEMES) colorIndex   = c;
@@ -193,7 +197,7 @@ void loadSettings() {
 }
 
 void saveSettings() {
-  if (!SAVE_SETTINGS) return;
+  if (!USE_BUTTONS || !SAVE_SETTINGS) return;
   EEPROM.update(0, EEPROM_MAGIC);   // update() only writes if the value changed
   EEPROM.update(1, patternIndex);
   EEPROM.update(2, colorIndex);
@@ -424,9 +428,11 @@ void setup() {
   digitalWrite(MSGEQ7_STROBE_PIN, HIGH);
   digitalWrite(MSGEQ7_RESET_PIN,  LOW);
 
-  pinMode(BUTTON_PATTERN_PIN, INPUT_PULLUP);
-  pinMode(BUTTON_COLOR_PIN,   INPUT_PULLUP);
-  pinMode(BUTTON_SPEED_PIN,   INPUT_PULLUP);
+  if (USE_BUTTONS) {
+    pinMode(BUTTON_PATTERN_PIN, INPUT_PULLUP);
+    pinMode(BUTTON_COLOR_PIN,   INPUT_PULLUP);
+    pinMode(BUTTON_SPEED_PIN,   INPUT_PULLUP);
+  }
 
   if (SERIAL_DEBUG) Serial.begin(115200);
 
@@ -442,11 +448,16 @@ void setup() {
   FastLED.clear();
   FastLED.show();
 
+  // Keep the defaults in range in case they were set too high
+  if (patternIndex >= NUM_PATTERNS)    patternIndex = 0;
+  if (colorIndex   >= NUM_COLOR_SCHEMES) colorIndex = 0;
+  if (speedIndex   >= NUM_SPEEDS)      speedIndex   = 0;
+
   loadSettings();
 }
 
 void loop() {
-  checkButtons();
+  if (USE_BUTTONS) checkButtons();
   readMSGEQ7();
 
   EVERY_N_MILLISECONDS(40) { rainbowHue++; }

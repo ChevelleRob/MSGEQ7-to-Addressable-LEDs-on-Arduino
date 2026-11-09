@@ -20,12 +20,15 @@ All of these are in the **USER SETTINGS** block at the top of the sketch:
 | `POWER_VOLTS`, `POWER_MAX_MA` | 5 V, 2000 mA | FastLED dims the strip to stay within your supply |
 | `SEGMENT_SIZE` | 15 | LEDs per segment for segment patterns |
 | `MSGEQ7_STROBE_PIN` / `RESET` / `OUT` | 7 / 8 / A0 | MSGEQ7 connections |
+| `USE_BUTTONS` | true | `false` = no buttons; the `DEFAULT_PATTERN` / `DEFAULT_COLOR` / `DEFAULT_SPEED` values set the display |
 | `BUTTON_PATTERN_PIN` / `COLOR` / `SPEED` | 2 / 3 / 4 | Pushbuttons |
 | `SCROLL_SPEEDS_MS[]` | 6…100 | ms per one-pixel step; the speed button cycles this list |
 | `NOISE_FLOOR`, `BEAT_THRESHOLD`, `AUTO_GAIN` | | Audio sensitivity tuning |
 | `CUSTOM_COLOR_1/2` | Red / Blue | Colors for the custom color schemes |
 
 ## Controls
+If you don't want buttons, set `USE_BUTTONS false`. Then pick the pattern, color scheme and speed with `DEFAULT_PATTERN`, `DEFAULT_COLOR` and `DEFAULT_SPEED` (the numbers are listed at the top of the sketch) and re-upload.
+
 - **Pattern button**: full strip start→end, end→start, middle→ends, ends→middle. Then the same four on every 15-LED segment, then two alternating (zig-zag) segment patterns.
 - **Color button**: Spectrum, RGB mix (bass/mid/treble), Rainbow, Fire, Ocean, Lava, Forest, Party, Custom 2-color, Custom 1-color.
 - **Speed button**: cycles through `SCROLL_SPEEDS_MS`.
